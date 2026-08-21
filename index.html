@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Rush</title>
+<style>
+:root{--bg:#f5f7ff;--card:#fff;--text:#172033;--muted:#68738a;--accent:#6c5ce7;--green:#16a36a;--red:#e34d59;--line:#e8ebf3}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:1180px;margin:auto;padding:20px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}
+.brand{font-weight:900;font-size:26px}.brand span{color:var(--accent)}
+.pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:700}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}nav button,.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer;background:#fff;color:var(--text);box-shadow:0 2px 10px #18244b0b}nav button.active,.btn.primary{background:var(--accent);color:#fff}
+.hero{background:linear-gradient(135deg,#6c5ce7,#8d7cff);color:#fff;border-radius:24px;padding:25px;margin-bottom:18px;display:flex;justify-content:space-between;gap:20px;align-items:center}.hero h1{margin:4px 0 8px;font-size:34px}.robot{font-size:70px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}.stat{font-size:28px;font-weight:900}.muted{color:var(--muted);font-size:13px}.stock{display:flex;justify-content:space-between;align-items:center;gap:10px}.stock h3{margin:0 0 5px}.price{font-weight:900;font-size:20px}.up{color:var(--green)}.down{color:var(--red)}
+.list{display:grid;gap:10px}.row{display:flex;align-items:center;justify-content:space-between;padding:13px;border:1px solid var(--line);border-radius:13px}.actions{display:flex;gap:7px}.small{padding:8px 11px;border-radius:9px;border:0;cursor:pointer;font-weight:800}.buy{background:#e9fff5;color:#08784c}.sell{background:#fff0f1;color:#b52e39}
+input,select{padding:10px;border:1px solid var(--line);border-radius:10px;width:100%;font:inherit}.form{display:grid;gap:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai{display:flex;gap:14px;align-items:center}.avatar{width:70px;height:70px;border-radius:20px;background:#eeeaff;display:grid;place-items:center;font-size:42px}.toast{position:fixed;right:20px;bottom:20px;background:#172033;color:#fff;padding:13px 16px;border-radius:12px;display:none;z-index:5}
+.badge{display:flex;gap:10px;align-items:center}.badgeIcon{font-size:30px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{align-items:flex-start}.robot{font-size:50px}.two{grid-template-columns:1fr}.app{padding:12px}}
+
+.cityMap{position:relative;min-height:560px;border-radius:22px;overflow:hidden;background:
+linear-gradient(90deg,transparent 48%,#d8dbe5 48%,#d8dbe5 52%,transparent 52%),
+linear-gradient(0deg,transparent 48%,#d8dbe5 48%,#d8dbe5 52%,transparent 52%),
+linear-gradient(135deg,#bce6a5,#d6efb9 45%,#a9dff2);border:8px solid #fff;box-shadow:inset 0 0 0 1px #dfe5ef}
+.cityRoad{position:absolute;background:#d5d8e1;box-shadow:inset 0 0 0 2px #c3c7d2}.cityRoad.h{left:0;right:0;top:50%;height:46px}.cityRoad.v{top:0;bottom:0;left:50%;width:46px}
+.building{position:absolute;transform:translate(-50%,-50%);min-width:90px;text-align:center;border:0;border-radius:16px;background:#fff;padding:10px 8px;box-shadow:0 7px 18px #18244b22;cursor:pointer;font-weight:900}.building .bi{font-size:34px;display:block}.building small{color:var(--muted);font-weight:700}
+.cityControls{display:grid;grid-template-columns:1fr 1fr;gap:12px}.shopGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.shopItem{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}.shopItem button{width:100%;margin-top:8px}
+@media(max-width:760px){.cityMap{min-height:470px}.shopGrid{grid-template-columns:1fr 1fr}}
+
+#loginScreen{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#6c5ce7,#8d7cff);display:flex;align-items:center;justify-content:center;padding:20px}
+.loginCard{width:min(440px,100%);background:#fff;border-radius:28px;padding:30px;box-shadow:0 25px 70px #171b3a55;text-align:center}
+.loginLogo{font-size:42px;font-weight:950;margin-bottom:6px}.loginLogo span{color:var(--accent)}
+.loginRobot{font-size:70px;margin:8px 0}.loginCard h1{margin:5px 0 8px}.loginCard p{color:var(--muted)}
+.loginForm{text-align:left;display:grid;gap:12px;margin-top:20px}.loginForm label{font-weight:800}.loginForm input{margin-top:6px}
+.loginBtn{width:100%;border:0;border-radius:14px;padding:13px;background:var(--accent);color:white;font-weight:900;font-size:16px;cursor:pointer}
+.loginError{color:#d33b48;font-weight:800;min-height:22px}
+.loginNote{font-size:12px;margin-top:14px;color:var(--muted)}
+
+.stockSearch{display:flex;gap:10px;margin:14px 0}.stockSearch input{flex:1}.searchResults{display:grid;gap:10px;margin-bottom:16px}.searchResult{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#fff}.searchResult .companyIcon{font-size:30px}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="loginCard">
+    <div class="loginLogo">🚀 Stock <span>Rush</span></div>
+    <div class="loginRobot" id="loginRobot">🤖</div>
+    <h1 id="loginTitle">Welcome to Stock Rush!</h1>
+    <p id="loginSubtitle">Create your player profile to start your virtual adventure.</p>
+    <form class="loginForm" onsubmit="return handleLogin(event)">
+      <div id="usernameField">
+        <label>👤 Username
+          <input id="usernameInput" maxlength="20" autocomplete="username" placeholder="Enter your username" required>
+        </label>
+      </div>
+      <label>🔐 PIN
+        <input id="pinInput" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" minlength="4" autocomplete="current-password" placeholder="4–6 digit PIN" required>
+      </label>
+      <div class="loginError" id="loginError"></div>
+      <button class="loginBtn" id="loginBtn" type="submit">Create Profile & Enter</button>
+    </form>
+    <div class="loginNote">Your PIN is used only to protect this game profile on this device. Stock Rush uses virtual money only.</div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="top"><div class="brand">🚀 Stock <span>Rush</span></div><div style="display:flex;gap:8px;align-items:center"><div class="pill" id="playerPill">👤 Player</div><div class="pill">GAME MONEY — NO REAL VALUE</div><button class="small" onclick="lockGame()">🔒 Lock</button></div></div>
+  <nav id="nav"></nav>
+  <main id="screen"></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+const PROFILE_KEY="stockRushProfile_v1";
+let profile=null;
+
+function loadProfile(){
+ try { return JSON.parse(localStorage.getItem(PROFILE_KEY)||"null"); }
+ catch(e){ return null; }
+}
+function showLogin(){
+ const saved=loadProfile();
+ const title=document.getElementById("loginTitle");
+ const sub=document.getElementById("loginSubtitle");
+ const userField=document.getElementById("usernameField");
+ const userInput=document.getElementById("usernameInput");
+ const pinInput=document.getElementById("pinInput");
+ const btn=document.getElementById("loginBtn");
+ const robot=document.getElementById("loginRobot");
+ document.getElementById("loginScreen").style.display="flex";
+ document.getElementById("loginError").textContent="";
+ if(saved){
+   title.textContent=`Welcome back, ${saved.username}!`;
+   sub.textContent="Enter your PIN to continue your Stock Rush adventure.";
+   userField.style.display="none";
+   userInput.required=false;
+   pinInput.value="";
+   btn.textContent="Unlock & Enter";
+   robot.textContent=saved.appearance||"🤖";
+ }else{
+   title.textContent="Welcome to Stock Rush!";
+   sub.textContent="Create your player profile to start your virtual adventure.";
+   userField.style.display="block";
+   userInput.required=true;
+   btn.textContent="Create Profile & Enter";
+   robot.textContent="🤖";
+ }
+}
+function handleLogin(event){
+ event.preventDefault();
+ const saved=loadProfile();
+ const pin=document.getElementById("pinInput").value.trim();
+ const err=document.getElementById("loginError");
+ if(!/^\d{4,6}$/.test(pin)){
+   err.textContent="PIN must contain 4 to 6 digits.";
+   return false;
+ }
+ if(saved){
+   if(pin!==saved.pin){
+     err.textContent="❌ Incorrect PIN. Access denied.";
+     sfx("down");
+     document.getElementById("pinInput").value="";
+     return false;
+   }
+   profile=saved;
+   enterGame();
+ }else{
+   const username=document.getElementById("usernameInput").value.trim();
+   if(username.length<2){
+     err.textContent="Please enter a username.";
+     return false;
+   }
+   profile={username,pin,appearance:"🤖"};
+   localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));
+   enterGame();
+ }
+ return false;
+}
+function enterGame(){
+ document.getElementById("loginScreen").style.display="none";
+ if(profile && profile.username) document.title=`Stock Rush — ${profile.username}`;
+ sfx("start");
+}
+function lockGame(){
+ profile=null;
+ showLogin();
+}
+
+const initialStocks=[
+{id:"zoom",symbol:"ZOM",name:"Zoom Motors",icon:"🚗",sector:"Automotive",price:245,vol:.045,sent:.15,history:[]},
+{id:"robo",symbol:"RBT",name:"RoboTech",icon:"🤖",sector:"Technology",price:180,vol:.06,sent:.10,history:[]},
+{id:"yummy",symbol:"YUM",name:"Yummy Foods",icon:"🍔",sector:"Food",price:320,vol:.035,sent:0,history:[]},
+{id:"galaxy",symbol:"GLX",name:"Galaxy Space",icon:"🚀",sector:"Space",price:95,vol:.09,sent:.20,history:[]},
+{id:"power",symbol:"PWR",name:"PowerMax",icon:"⚡",sector:"Energy",price:150,vol:.05,sent:0,history:[]},
+{id:"spark",symbol:"SPK",name:"Spark Mobile",icon:"📱",sector:"Technology",price:210,vol:.055,sent:-.05,history:[]},
+{id:"ocean",symbol:"OCN",name:"Ocean World",icon:"🌊",sector:"Travel",price:125,vol:.05,sent:.05,history:[]},
+{id:"green",symbol:"GRN",name:"Green Energy",icon:"🌱",sector:"Energy",price:175,vol:.045,sent:.12,history:[]},
+{id:"funplay",symbol:"FPG",name:"FunPlay Games",icon:"🎮",sector:"Games",price:130,vol:.07,sent:.10,history:[]},
+{id:"sky",symbol:"SKY",name:"Sky Airlines",icon:"✈️",sector:"Travel",price:110,vol:.06,sent:-.02,history:[]}
+];
+
+// Stock Rush sound engine — generated with Web Audio API, no external audio files required.
+let soundEnabled = true;
+let audioCtx = null;
+
+function initAudio(){
+  if(!soundEnabled) return;
+  if(!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(Ctx) audioCtx = new Ctx();
+  }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+function tone(freq, duration=.08, type="sine", volume=.035, delay=0){
+  if(!soundEnabled) return;
+  initAudio();
+  if(!audioCtx) return;
+  const now=audioCtx.currentTime+delay;
+  const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,now);
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(volume,now+.01);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(now); osc.stop(now+duration+.02);
+}
+function sfx(name){
+  if(!soundEnabled) return;
+  const patterns={
+    click:[[520,.045,"sine",.018,0]],
+    buy:[[520,.06,"triangle",.028,0],[700,.09,"triangle",.03,.055]],
+    sell:[[700,.06,"triangle",.028,0],[520,.09,"triangle",.03,.055]],
+    up:[[520,.07,"sine",.025,0],[660,.07,"sine",.025,.07],[820,.11,"sine",.028,.14]],
+    down:[[520,.08,"sine",.022,0],[420,.08,"sine",.022,.08],[330,.12,"sine",.025,.16]],
+    badge:[[660,.08,"triangle",.028,0],[830,.08,"triangle",.03,.09],[1040,.15,"triangle",.032,.18]],
+    news:[[620,.07,"square",.018,0],[760,.09,"square",.02,.09]],
+    ai:[[700,.06,"sine",.018,0],[900,.1,"sine",.022,.08]],
+    start:[[440,.08,"triangle",.025,0],[660,.08,"triangle",.028,.09],[880,.15,"triangle",.03,.18]]
+  };
+  (patterns[name]||patterns.click).forEach(x=>tone(...x));
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  if(soundEnabled){initAudio();sfx("click");}
+  render();
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("button") && !e.target.closest(".buy") && !e.target.closest(".sell") && !e.target.closest("[data-no-click-sfx]")) sfx("click");
+});
+
+let state={cash:100000,stocks:structuredClone(initialStocks),holdings:{},news:[],page:"Home",
+ai:{name:"Robo",appearance:"🤖",personality:"Friendly",theme:"Space"},badges:[],challengeDone:[],
+city:{
+ level:1,
+ experience:0,
+ buildings:[],
+ population:25,
+ happiness:70,
+ unlocked:["plot","house","road","park","shop","school"],
+ selected:null
+ },
+finance:{
+ todaySpent:0,
+ todayEarned:0,
+ dayStartValue:100000,
+ budget:25000,
+ trades:[]
+ }};
+
+state.stocks.forEach(s=>{s.history=[s.price];});
+
+const appearances={"🤖":"Robot","🐱":"Cat","🐶":"Dog","🦊":"Fox","🧙":"Wizard","👽":"Alien","🧑‍🚀":"Astronaut","🦄":"Fantasy"};
+const themes={Space:["#6c5ce7","#8d7cff"],Nature:["#159f6b","#55c27b"],City:["#4776e6","#8e9cff"],Fantasy:["#a64de8","#e98cff"],Futuristic:["#00a6a6","#55d7d7"],Rainbow:["#ed5a9d","#ff9f5a"],Gaming:["#e84c88","#7b4de8"]};
+
+function money(n){return "₹"+Math.round(n).toLocaleString("en-IN")}
+function getValue(){return state.cash+Object.entries(state.holdings).reduce((a,[id,h])=>a+stock(id).price*h.qty,0)}
+function pnl(){return getValue()-100000}
+function stock(id){return state.stocks.find(s=>s.id===id)}
+function pct(n){return (n*100).toFixed(1)+"%"}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
+function aiText(text){return `<div class="ai"><div class="avatar">${state.ai.appearance}</div><div><b>${state.ai.name}</b><div class="muted">${text}</div></div></div>`}
+function render(){
+ document.documentElement.style.setProperty("--accent",themes[state.ai.theme][0]);
+ document.documentElement.style.setProperty("--bg",state.ai.theme==="Space"?"#f5f7ff":"#f7f8fb");
+ const pages=["Home","Market","Portfolio","Finance","News","Rush City","My AI","Challenges","AI Lab","Settings"];
+ document.getElementById("nav").innerHTML=pages.map(p=>`<button class="${state.page===p?"active":""}" onclick="go('${p}')">${p==="My AI"?"🤖":p==="AI Lab"?"🎨":p==="Market"?"📈":p==="Portfolio"?"💼":p==="Finance"?"💳":p==="News"?"📰":p==="Challenges"?"🏆":p==="Settings"?"⚙️":p==="Rush City"?"🏙️":"🏠"} ${p}</button>`).join("");
+ let html="";
+ if(state.page==="Home") html=home();
+ if(state.page==="Market") html=market();
+ if(state.page==="Portfolio") html=portfolio();
+ if(state.page==="Finance") html=finance();
+ if(state.page==="News") html=news();
+ if(state.page==="Rush City") html=city();
+ if(state.page==="My AI") html=ai();
+ if(state.page==="Challenges") html=challenges();
+ if(state.page==="AI Lab") html=ailab();
+ if(state.page==="Settings") html=settings();
+ document.getElementById("screen").innerHTML=html;
+}
+function go(p){state.page=p;render()}
+function home(){
+ const v=getValue(), p=pnl();
+ return `<section class="hero"><div><div class="muted" style="color:#eee">WELCOME TO</div><h1>Stock Rush 🚀</h1><p>Learn, play and build your virtual portfolio.</p>${aiText("Ready for today's market adventure? Remember: this is only a game!")}</div><div class="robot">${state.ai.appearance}</div></section>
+ <div class="grid">
+ <div class="card"><div class="muted">💰 Virtual Balance</div><div class="stat">${money(state.cash)}</div><div class="muted">Available to spend</div></div>
+ <div class="card"><div class="muted">💼 Portfolio Value</div><div class="stat">${money(v)}</div><div class="${p>=0?"up":"down"}">${p>=0?"+":""}${money(p)} overall</div></div>
+ <div class="card"><div class="muted">📊 Today's Spending</div><div class="stat">${money(state.finance.todaySpent)}</div><div class="muted">Budget: ${money(state.finance.budget)}</div></div>
+ </div>
+ <br>
+ <div class="grid">
+  <div class="card"><div class="muted">📈 Today's Gain/Loss</div><div class="stat ${p>=0?"up":"down"}">${p>=0?"+":""}${money(p)}</div></div>
+  <div class="card"><div class="muted">💵 Earned Today</div><div class="stat up">+${money(state.finance.todayEarned)}</div></div>
+  <div class="card"><div class="muted">🎯 Budget Remaining</div><div class="stat">${money(Math.max(0,state.finance.budget-state.finance.todaySpent))}</div></div>
+ </div><br><div class="card"><h2>📈 Market Movers</h2><div class="grid">${state.stocks.slice(0,6).map(s=>stockCard(s)).join("")}</div></div>`;
+}
+function miniChart(s){
+ const data=s.history.slice(-14);
+ if(data.length<2)return "";
+ const min=Math.min(...data), max=Math.max(...data), range=(max-min)||1;
+ const points=data.map((v,i)=>`${(i/(data.length-1))*100},${100-((v-min)/range)*82-9}`).join(" ");
+ const last=data[data.length-1], first=data[0], positive=last>=first;
+ const arrow=positive?"↗":"↘";
+ return `<div style="margin:9px 0 5px">
+   <svg viewBox="0 0 100 100" width="100%" height="55" preserveAspectRatio="none" aria-label="stock price chart">
+    <polyline points="${points}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="${positive?"up":"down"}"></polyline>
+   </svg>
+   <div class="${positive?"up":"down"}" style="font-weight:900">${arrow} ${positive?"Growing":"Falling"} · ${money(first)} → ${money(last)}</div>
+ </div>`;
+}
+function stockCard(s){
+ const prev=s.history[s.history.length-2]||s.price;
+ const ch=s.price-prev, pc=ch/prev;
+ const trend=s.price>=s.history[0]?"up":"down";
+ return `<div class="card"><div class="stock"><div><h3>${s.icon} ${s.name}</h3><div class="muted">${s.symbol} · ${s.sector}</div></div><div class="price">${money(s.price)}</div></div>
+ <div class="${ch>=0?"up":"down"}">${ch>=0?"▲":"▼"} ${ch>=0?"+":""}${money(ch)} (${pct(pc)})</div>
+ ${miniChart(s)}
+ <div class="actions"><button class="small buy" onclick="trade('${s.id}','buy')">BUY</button><button class="small sell" onclick="trade('${s.id}','sell')">SELL</button></div></div>`;
+}
+
+let stockSearchTerm="";
+function searchStocks(term){
+ stockSearchTerm=(term||"").trim().toLowerCase();
+ render();
+ setTimeout(()=>{const el=document.getElementById("stockSearchInput");if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},0);
+}
+function clearStockSearch(){stockSearchTerm="";render();}
+function searchableStocks(){
+ const q=stockSearchTerm;
+ if(!q)return [];
+ return stocks.filter(s=>
+   s.name.toLowerCase().includes(q) ||
+   s.symbol.toLowerCase().includes(q) ||
+   s.sector.toLowerCase().includes(q)
+ );
+}
+function searchResultCard(s){
+ const prev=s.history[s.history.length-2]||s.price, ch=s.price-prev;
+ return `<div class="searchResult">
+  <div style="display:flex;align-items:center;gap:12px"><span class="companyIcon">${s.icon}</span><div><b>${s.name}</b><div class="muted">${s.symbol} · ${s.sector}</div><div class="${ch>=0?"up":"down"}">${ch>=0?"▲":"▼"} ${ch>=0?"+":""}${money(ch)} today</div></div></div>
+  <div style="text-align:right"><b>${money(s.price)}</b><br><button class="small buy" onclick="trade('${s.id}','buy')">BUY</button></div>
+ </div>`;
+}
+
+function market(){
+ const results=searchableStocks();
+ return `<div class="card"><h1>📈 Market</h1><p class="muted">Search a fictional company, open its stock card, and buy it with virtual money.</p>
+ <div class="stockSearch"><input id="stockSearchInput" value="${stockSearchTerm}" placeholder="🔎 Search company or symbol (e.g. RoboTech, RBT)" oninput="searchStocks(this.value)"><button class="small" onclick="clearStockSearch()">Clear</button></div>
+ ${stockSearchTerm?`<div class="muted" style="margin-bottom:8px">${results.length} result${results.length===1?"":"s"} found</div><div class="searchResults">${results.length?results.map(searchResultCard).join(""):`<div class="card"><b>No fictional company found.</b><div class="muted">Try a company name, symbol, or sector.</div></div>`}</div>`:""}
+ </div><br>
+ <div class="grid">${stocks.map(stockCard).join("")}</div>`;
+}
+function trade(id,type){
+ const s=stock(id), q=parseInt(prompt(`${type.toUpperCase()} ${s.name}\\nCurrent price: ${money(s.price)}\\nHow many shares?`),10);
+ if(!q||q<1)return;
+ const total=s.price*q;
+ if(type==="buy"){
+  if(total>state.cash){toast("Not enough virtual cash.");return}
+  state.cash-=total;
+  state.finance.todaySpent+=total;
+  state.finance.trades.push({type:"BUY",id,amount:total,time:new Date().toLocaleTimeString()});
+  const h=state.holdings[id]||{qty:0,avg:0};
+  h.avg=(h.qty*h.avg+q*s.price)/(h.qty+q); h.qty+=q; state.holdings[id]=h;
+  if(!state.challengeDone.includes("first")){state.challengeDone.push("first");state.badges.push("First Trade")}
+  sfx("buy"); toast(`🎉 Bought ${q} ${s.symbol} shares!`);
+ }else{
+  const h=state.holdings[id];
+  if(!h||q>h.qty){toast("You don't own that many shares.");return}
+  state.cash+=total; state.finance.todayEarned+=total; state.finance.trades.push({type:"SELL",id,amount:total,time:new Date().toLocaleTimeString()}); h.qty-=q; if(h.qty===0)delete state.holdings[id];
+  sfx("sell"); toast(`Sold ${q} ${s.symbol} shares.`);
+ }
+ render();
+}
+function portfolio(){
+ const entries=Object.entries(state.holdings);
+ return `<div class="card"><h1>💼 My Portfolio</h1>
+ <div class="row" style="margin-bottom:14px"><div><b>🎯 Daily Spending Budget</b><div class="muted">Your virtual city/trading spending target</div></div><b>${money(state.finance.budget)}</b></div>
+ <div class="grid"><div><span class="muted">Cash</span><div class="stat">${money(state.cash)}</div></div><div><span class="muted">Total Value</span><div class="stat">${money(getValue())}</div></div><div><span class="muted">P/L</span><div class="stat ${pnl()>=0?"up":"down"}">${pnl()>=0?"+":""}${money(pnl())}</div></div></div></div><br><div class="card"><h2>Holdings</h2>${entries.length?`<div class="list">${entries.map(([id,h])=>{const s=stock(id), pl=(s.price-h.avg)*h.qty;return `<div class="row"><div>${s.icon} <b>${s.name}</b><div class="muted">${h.qty} shares · Avg ${money(h.avg)}</div></div><div><b>${money(s.price*h.qty)}</b><div class="${pl>=0?"up":"down"}">${pl>=0?"+":""}${money(pl)}</div></div></div>`}).join("")}</div>`:"<p class='muted'>No stocks yet. Visit Market to make your first virtual trade.</p>"}</div>`;
+}
+
+function finance(){
+ const spent=state.finance.todaySpent, earned=state.finance.todayEarned;
+ const remaining=Math.max(0,state.finance.budget-spent);
+ const budgetPct=Math.min(100,(spent/state.finance.budget)*100);
+ const overall=pnl();
+ return `<div class="card"><h1>💳 Money Center</h1><p class="muted">A simple view of your virtual money habits. No real money is used.</p>
+ <div class="grid">
+  <div><div class="muted">💰 Cash</div><div class="stat">${money(state.cash)}</div></div>
+  <div><div class="muted">💸 Spent Today</div><div class="stat">${money(spent)}</div></div>
+  <div><div class="muted">💵 Received Today</div><div class="stat up">+${money(earned)}</div></div>
+ </div></div><br>
+ <div class="card"><h2>🎯 Daily Budget</h2><div class="row"><span>Budget</span><b>${money(state.finance.budget)}</b></div>
+ <div style="height:14px;background:#edf0f5;border-radius:20px;overflow:hidden;margin:12px 0"><div style="height:100%;width:${budgetPct}%;background:var(--accent);border-radius:20px"></div></div>
+ <div class="row"><span>Spent</span><b>${money(spent)}</b></div><div class="row"><span>Remaining</span><b class="${remaining<0?"down":""}">${money(remaining)}</b></div></div><br>
+ <div class="card"><h2>📊 Gain & Loss</h2><div class="grid">
+  <div><div class="muted">Overall P/L</div><div class="stat ${overall>=0?"up":"down"}">${overall>=0?"▲ +":"▼ "}${money(overall)}</div></div>
+  <div><div class="muted">Return</div><div class="stat ${overall>=0?"up":"down"}">${overall>=0?"+":""}${pct(overall/100000)}</div></div>
+  <div><div class="muted">Trades</div><div class="stat">${state.finance.trades.length}</div></div>
+ </div></div><br>
+ <div class="card"><h2>🧾 Today's Activity</h2>${state.finance.trades.length?`<div class="list">${state.finance.trades.slice().reverse().slice(0,12).map(t=>`<div class="row"><span><b>${t.type}</b> · ${t.id.toUpperCase()}</span><span>${money(t.amount)}<br><small class="muted">${t.time}</small></span></div>`).join("")}</div>`:"<p class='muted'>No spending or trading yet today.</p>"}</div>`;
+}
+
+function news(){
+ if(!state.news.length)generateNews();
+ return `<div class="card"><h1>📰 Today's News</h1><p class="muted">Fictional events drive the simulated market.</p><div class="list">${state.news.map(n=>`<div class="row"><div><b>${n.icon} ${n.title}</b><div class="muted">${n.text}</div></div><span class="${n.impact>=0?"up":"down"}">${n.impact>=0?"+":""}${(n.impact*100).toFixed(0)}%</span></div>`).join("")}</div></div>`;
+}
+function generateNews(){
+ const choices=[
+  ["🚀","Galaxy Space launches a new training rocket!","Positive news lifts Galaxy Space.",.10,"galaxy"],
+  ["🤖","RoboTech reveals a clever learning robot!","RoboTech gets a positive fictional boost.",.08,"robo"],
+  ["🌧️","Yummy Foods faces factory delays.","The delay hurts Yummy Foods sentiment.",-.07,"yummy"],
+  ["⚡","PowerMax discovers a new energy idea!","PowerMax gets a positive fictional boost.",.06,"power"],
+  ["📱","Spark Mobile announces a fun new device.","Spark Mobile gets a positive fictional boost.",.07,"spark"]
+ ];
+ state.news=choices.sort(()=>Math.random()-.5).slice(0,3).map(x=>({icon:x[0],title:x[1],text:x[2],impact:x[3],stock:x[4]}));
+}
+function ai(){ sfx("ai");
+ return `<div class="card"><h1>🤖 My AI — ${state.ai.name}</h1>${aiText(personalityMessage())}<br><h2>What can I help with?</h2><div class="actions"><button class="btn primary" onclick="toast('Try asking: Why did a stock price change?')">💡 Learn about stocks</button><button class="btn" onclick="go('Market')">📈 Explore Market</button><button class="btn" onclick="go('AI Lab')">🎨 Customize Me</button></div></div>`;
+}
+function personalityMessage(){
+ const p=state.ai.personality;
+ if(p==="Funny")return "Stocks can be a roller-coaster 🎢! Want to explore today's fictional market?";
+ if(p==="Smart")return "I can explain price movement, portfolio value, profit and loss using simple examples.";
+ if(p==="Energetic")return "Let's GO! 🚀 Your next market adventure is waiting!";
+ return "I'm here to help you learn how the fictional market works. You make the game decisions!";
+}
+function challenges(){
+ const done=state.challengeDone.includes("first");
+ return `<div class="card"><h1>🏆 Challenges</h1><div class="list">
+ <div class="row"><div><b>🏅 First Trade</b><div class="muted">Buy your first fictional stock.</div></div><b>${done?"✅ Complete":"100 XP"}</b></div>
+ <div class="row"><div><b>💼 Portfolio Builder</b><div class="muted">Own 3 different companies.</div></div><b>${Object.keys(state.holdings).length>=3?"✅ Complete":"300 XP"}</b></div>
+ <div class="row"><div><b>📰 Market Explorer</b><div class="muted">Read today's fictional news.</div></div><b>${state.news.length?"✅ Complete":"200 XP"}</b></div>
+ <div class="row"><div><b>🏗️ City Builder</b><div class="muted">Build 3 buildings in Rush City.</div></div><b>${state.city.buildings.length>=3?"✅ Complete":"400 XP"}</b></div>
+ <div class="row"><div><b>💼 City Worker</b><div class="muted">Complete a future city job.</div></div><b>Coming Soon</b></div>
+ </div></div>`;
+}
+function ailab(){
+ return `<div class="card"><h1>🎨 AI Lab</h1><div class="ai"><div class="avatar" style="font-size:52px">${state.ai.appearance}</div><div><b>${state.ai.name}</b><div class="muted">${state.ai.personality} · ${state.ai.theme}</div></div></div><br>
+ <div class="form"><label>Name<input id="aiName" value="${state.ai.name}" maxlength="20"></label>
+ <div class="two"><label>Appearance<select id="aiAppearance">${Object.entries(appearances).map(([e,n])=>`<option value="${e}" ${state.ai.appearance===e?"selected":""}>${e} ${n}</option>`).join("")}</select></label>
+ <label>Personality<select id="aiPersonality">${["Friendly","Smart","Funny","Energetic"].map(x=>`<option ${state.ai.personality===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
+ <label>Theme<select id="aiTheme">${Object.keys(themes).map(x=>`<option ${state.ai.theme===x?"selected":""}>${x}</option>`).join("")}</select></label>
+ <button class="btn primary" onclick="saveAI()">SAVE AI</button></div></div>`;
+}
+function saveAI(){
+ state.ai.name=document.getElementById("aiName").value.trim()||"Robo";
+ if(profile){ profile.appearance=document.getElementById("aiAppearance").value; localStorage.setItem(PROFILE_KEY,JSON.stringify(profile)); document.getElementById("playerPill").textContent="👤 "+profile.username; }
+ state.ai.appearance=document.getElementById("aiAppearance").value;
+ state.ai.personality=document.getElementById("aiPersonality").value;
+ state.ai.theme=document.getElementById("aiTheme").value;
+ sfx("badge"); toast("🤖 AI customization saved!");render();
+}
+
+function city(){
+ const c=state.city;
+ const buildingDefs={
+  house:{name:"House",icon:"🏠",cost:5000,desc:"A cozy home for your city."},
+  road:{name:"Road",icon:"🛣️",cost:2500,desc:"Improves your growing city."},
+  park:{name:"Park",icon:"🌳",cost:3000,desc:"Makes citizens happier."},
+  shop:{name:"Shop",icon:"🏪",cost:8000,desc:"A place for customers and future businesses."},
+  school:{name:"School",icon:"🏫",cost:12000,desc:"Improves learning and city growth."},
+  hospital:{name:"Hospital",icon:"🏥",cost:18000,desc:"A healthy city needs care."},
+  restaurant:{name:"Restaurant",icon:"🍕",cost:10000,desc:"Serve virtual customers."},
+  mall:{name:"Mall",icon:"🏬",cost:25000,desc:"Unlocks at City Level 2."},
+  station:{name:"Station",icon:"🚉",cost:35000,desc:"Unlocks at City Level 2."},
+  stadium:{name:"Stadium",icon:"🏟️",cost:60000,desc:"Unlocks at City Level 3."},
+  airport:{name:"Airport",icon:"✈️",cost:90000,desc:"Unlocks at City Level 3."},
+  skyscraper:{name:"Skyscraper",icon:"🏢",cost:120000,desc:"Unlocks at City Level 3."},
+  space:{name:"Space Center",icon:"🚀",cost:200000,desc:"Unlocks at City Level 4."}
+ };
+ const positions=[
+  [18,18],[34,22],[65,18],[82,24],[18,40],[35,42],[65,40],[82,42],
+  [18,70],[34,66],[66,68],[82,72],[25,86],[50,84],[75,86]
+ ];
+ const buildings=c.buildings.map((b,i)=>{
+   const [x,y]=positions[i%positions.length], d=buildingDefs[b.type]||buildingDefs.house;
+   return `<button class="building" style="left:${x}%;top:${y}%" onclick="inspectBuilding('${b.id}')"><span class="bi">${d.icon}</span>${d.name}<small>Lv.${b.level||1}</small></button>`;
+ }).join("");
+ return `<div class="hero"><div><div class="muted" style="color:#eee">YOUR VIRTUAL WORLD</div><h1>🏙️ Rush City</h1><p>Build, develop and customize your own city using virtual money.</p>${aiText(cityAi())}</div><div class="robot">🏙️</div></div>
+ <div class="grid">
+  <div class="card"><div class="muted">City Level</div><div class="stat">${c.level}</div></div>
+  <div class="card"><div class="muted">Population</div><div class="stat">👨‍👩‍👧 ${c.population}</div></div>
+  <div class="card"><div class="muted">Happiness</div><div class="stat">😊 ${c.happiness}%</div></div>
+ </div><br>
+ <div class="card"><h2>🗺️ Your City</h2><div class="cityMap"><div class="cityRoad h"></div><div class="cityRoad v"></div>${buildings||`<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:55px">🏗️</div><b>Your city is waiting!</b><div class="muted">Build your first house below.</div></div></div>`}</div></div><br>
+ <div class="card"><h2>🏗️ Build & Develop</h2><div class="shopGrid">${Object.entries(buildingDefs).map(([key,d])=>{
+   const unlock=key==="mall"||key==="station"?2:key==="stadium"||key==="airport"||key==="skyscraper"?3:key==="space"?4:1;
+   const locked=c.level<unlock;
+   return `<div class="shopItem"><div style="font-size:32px">${d.icon}</div><b>${d.name}</b><div class="muted">${d.desc}</div><div><b>${money(d.cost)}</b></div><button class="btn ${locked?"":"primary"}" ${locked?"disabled":""} onclick="build('${key}')">${locked?"🔒 Level "+unlock:"BUILD"}</button></div>`;
+ }).join("")}</div></div>`;
+}
+function cityAi(){
+ if(state.city.buildings.length===0)return "Let's build your first building! Start with a house.";
+ if(state.city.level>=4)return "Your city is amazing! You have reached Mega City level.";
+ return `Your city has ${state.city.buildings.length} buildings. Keep developing it to unlock new areas!`;
+}
+function build(type){
+ const defs={house:["House",5000,"🏠"],road:["Road",2500,"🛣️"],park:["Park",3000,"🌳"],shop:["Shop",8000,"🏪"],school:["School",12000,"🏫"],hospital:["Hospital",18000,"🏥"],restaurant:["Restaurant",10000,"🍕"],mall:["Mall",25000,"🏬"],station:["Station",35000,"🚉"],stadium:["Stadium",60000,"🏟️"],airport:["Airport",90000,"✈️"],skyscraper:["Skyscraper",120000,"🏢"],space:["Space Center",200000,"🚀"]};
+ const d=defs[type], unlock=type==="mall"||type==="station"?2:type==="stadium"||type==="airport"||type==="skyscraper"?3:type==="space"?4:1;
+ if(state.city.level<unlock){toast("🔒 Unlock a higher city level first.");return}
+ if(state.cash<d[1]){toast("Not enough virtual cash. Try a job or market challenge.");return}
+ state.cash-=d[1];
+ state.finance.todaySpent+=d[1];
+ state.finance.trades.push({type:"BUILD",id:type,amount:d[1],time:new Date().toLocaleTimeString()});
+ const id=type+"_"+Date.now();
+ state.city.buildings.push({id,type,level:1});
+ if(type==="house"){state.city.population+=10;state.city.happiness=Math.min(100,state.city.happiness+2)}
+ if(type==="park"){state.city.happiness=Math.min(100,state.city.happiness+8)}
+ if(type==="school"){state.city.happiness=Math.min(100,state.city.happiness+5);state.city.experience+=20}
+ if(type==="shop"||type==="restaurant"){state.city.experience+=25}
+ state.city.experience+=10;
+ const required=state.city.level*100;
+ if(state.city.experience>=required){state.city.experience-=required;state.city.level=Math.min(4,state.city.level+1);sfx("badge");toast(`🎉 City Level ${state.city.level} unlocked!`)}
+ else {sfx("buy");toast(`${d[2]} ${d[0]} built!`)}
+ render();
+}
+function inspectBuilding(id){
+ const b=state.city.buildings.find(x=>x.id===id); if(!b)return;
+ const names={house:"House",road:"Road",park:"Park",shop:"Shop",school:"School",hospital:"Hospital",restaurant:"Restaurant",mall:"Mall",station:"Station",stadium:"Stadium",airport:"Airport",skyscraper:"Skyscraper",space:"Space Center"};
+ const icon={house:"🏠",road:"🛣️",park:"🌳",shop:"🏪",school:"🏫",hospital:"🏥",restaurant:"🍕",mall:"🏬",station:"🚉",stadium:"🏟️",airport:"✈️",skyscraper:"🏢",space:"🚀"};
+ toast(`${icon[b.type]} ${names[b.type]} · Level ${b.level}`);
+}
+
+function settings(){
+ return `<div class="card"><h1>⚙️ Settings</h1>
+ <div class="row" style="margin-bottom:12px"><span>👤 Player</span><b>${profile?profile.username:"Player"}</b></div>
+ <div class="row" style="margin-bottom:12px"><span>🔐 PIN protection</span><b>Enabled</b></div>
+ <div class="list">
+ <div class="row"><span>Virtual money</span><b>₹100,000 starting balance</b></div>
+ <div class="row"><span>Sound Effects</span><button class="small" onclick="toggleSound()">${soundEnabled?"🔊 ON":"🔇 OFF"}</button></div>
+ <div class="row"><span>Animations</span><button class="small">ON / OFF</button></div>
+ <div class="row"><span>Parent Zone</span><button class="small" onclick="toast('Parent Zone placeholder — add PIN/authentication in production.')">OPEN</button></div>
+ </div><br><p class="muted">Stock Rush is an educational game. All money and companies are fictional and have no real-world value.</p></div>`;
+}
+function tick(){
+ state.stocks.forEach(s=>{
+  const move=(Math.random()*2-1)*s.vol+s.sent*.01;
+  s.history.push(s.price);
+  s.price=Math.max(1,Math.round(s.price*(1+move)*100)/100);
+  if(s.history.length>30)s.history.shift();
+ });
+ if(Math.random()<.18){
+   const s=state.stocks[Math.floor(Math.random()*state.stocks.length)];
+   const positive=Math.random()>.45;
+   s.sent=Math.max(-1,Math.min(1,s.sent+(positive?.15:-.15)));
+   state.news.unshift({icon:positive?"✨":"⚠️",title:positive?`${s.name} receives a fictional boost!`:`${s.name} faces a fictional setback.`,text:"A simulated market event changed sentiment.",impact:positive?.05:-.05,stock:s.id});
+   state.news=state.news.slice(0,5); sfx("news");
+ }
+ if(state.page==="Home"||state.page==="Market"||state.page==="Portfolio")render();
+}
+let firstInteraction=false;
+document.addEventListener("pointerdown",()=>{
+  if(!firstInteraction){firstInteraction=true; sfx("start");}
+},{once:true});
+setInterval(tick,10000);
+render();
+profile=loadProfile();
+if(profile){
+ document.getElementById("playerPill").textContent="👤 "+profile.username;
+ showLogin();
+}else{
+ showLogin();
+}
+
+</script>
+</body>
+</html>
