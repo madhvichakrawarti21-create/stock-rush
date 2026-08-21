@@ -1,0 +1,10 @@
+{
+  "name": "Stock Rush",
+  "short_name": "Stock Rush",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7ff",
+  "theme_color": "#6c5ce7",
+  "description": "Stock Rush is a fictional stock-market simulation game.",
+  "orientation": "portrait"
+}
