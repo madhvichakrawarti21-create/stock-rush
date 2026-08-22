@@ -552,4 +552,7 @@ if(profile){
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./service-worker.js");
 }
-</script>
+</script>let state={trades:[]
+}};function saveGame(){
+  localStorage.setItem("stockRushGame", JSON.stringify(state));
+}
