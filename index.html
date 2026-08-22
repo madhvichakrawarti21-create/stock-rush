@@ -561,4 +561,38 @@ function loadGame(){
   if(saved){
     state = JSON.parse(saved);
   }
-}
+}<button>Start Game</button><button id="saveGameBtn">💾 Save Game</button>
+<button id="loadGameBtn">📂 Load Game</button>// SAVE GAME
+document.getElementById("saveGameBtn").addEventListener("click", () => {
+    const gameData = {
+        money: money,
+        level: level,
+        score: score,
+        portfolio: portfolio
+    };
+
+    localStorage.setItem("stockRushSave", JSON.stringify(gameData));
+
+    alert("💾 Game saved successfully!");
+});
+
+// LOAD GAME
+document.getElementById("loadGameBtn").addEventListener("click", () => {
+    const savedGame = localStorage.getItem("stockRushSave");
+
+    if (!savedGame) {
+        alert("❌ No saved game found!");
+        return;
+    }
+
+    const gameData = JSON.parse(savedGame);
+
+    money = gameData.money ?? 10000;
+    level = gameData.level ?? 1;
+    score = gameData.score ?? 0;
+    portfolio = gameData.portfolio ?? {};
+
+    updateUI();
+
+    alert("📂 Game loaded successfully!");
+});
